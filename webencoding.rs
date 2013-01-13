@@ -27,19 +27,25 @@ fn encode_windows1252(code_points: &[char]) -> ~[u8] {
 #[cfg(test)]
 mod tests {
     fn test_codec(
-            decoder: fn (&[u8]) -> ~[char],
             encoder: fn (&[char]) -> ~[u8],
-            bytes: &[u8], string: &str) {
+            decoder: fn (&[u8]) -> ~[char],
+            string: &str, bytes: &[u8]) {
         let code_points: &[char] = str::chars(string);
-        let decoded: &[char] = decoder(bytes);
         let encoded: &[u8] = encoder(code_points);
-        assert decoded == code_points;
+        let decoded: &[char] = decoder(bytes);
         assert encoded == bytes;
+        assert decoded == code_points;
     }
 
     #[test]
     fn test_windows1252() {
-        test_codec(decode_windows1252, encode_windows1252,
-            &[72, 128, 108, 108, 246], &"H€llö");
+        test_codec(encode_windows1252, decode_windows1252,
+            "H€llö", [72, 128, 108, 108, 246]);
+    }
+
+    #[test]
+    #[should_fail]
+    fn test_invalid_windows1252() {
+        encode_windows1252(str::chars("今日は"));
     }
 }
