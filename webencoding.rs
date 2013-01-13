@@ -135,17 +135,19 @@ const Windows1252: Encoding = {
 mod tests {
     use cmp::Eq;
 
-    fn assert_equals<T: Eq>(message: &str, a: &T, b: &T) {
-        if a != b {
-            fail fmt!("%s: %? != %?", message, a, b);
-        }
+    fn assert_bytes_equals(message: &str, a: &[u8], b: &[u8]) {
+        if a != b { fail fmt!("%s: %? != %?", message, a, b) }
+    }
+    fn assert_chars_equals(message: &str, a: &[char], b: &[char]) {
+        if a != b { fail fmt!("%s: %? != %?", message,
+                              str::from_chars(a), str::from_chars(b)) }
     }
 
     fn test_codec(encoding: Encoding, code_points: &[char], bytes: &[u8]) {
         let encoded: &[u8] = (encoding.encoder)(code_points);
         let decoded: &[char] = (encoding.decoder)(bytes);
-        assert_equals("Encoding", &encoded, &bytes);
-        assert_equals("Decoding", &decoded, &code_points);
+        assert_bytes_equals("Encoding", encoded, bytes);
+        assert_chars_equals("Decoding", decoded, code_points);
     }
 
     #[test]
@@ -168,7 +170,7 @@ mod tests {
                    [228, 187, 138, 230, 151, 165, 227, 129, 175]);
         let decoded: &[char] = (UTF8.decoder)(
             [72, 226, 130, 255, 108, 108, 195, 182]);
-        assert_equals("Decoding errors", &decoded,
-                      & &['H', '�', '�', 'l', 'l', 'ö'])
+        assert_chars_equals("Decoding errors", decoded,
+                            ['H', '�', '�', 'l', 'l', 'ö'])
     }
 }
