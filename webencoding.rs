@@ -5,6 +5,8 @@ use indexes;
 const REPLACEMENT_CHARACTER: char = '\uFFFD';
 
 
+// FIXME This fits the definition of a pure function,
+// but the compiler complains about code_points.push() being impure.
 fn decode_utf8(bytes: &[u8]) -> ~[char] {
     let mut code_point: u32 = 0;
     let mut lower_boundary: u8 = 0x80;
@@ -69,7 +71,7 @@ fn decode_utf8(bytes: &[u8]) -> ~[char] {
 }
 
 
-fn encode_utf8(code_points: &[char]) -> ~[u8] {
+pure fn encode_utf8(code_points: &[char]) -> ~[u8] {
     do code_points.flat_map |code_point| {
         let cp = *code_point as u32;
         match cp {
@@ -93,7 +95,7 @@ fn encode_utf8(code_points: &[char]) -> ~[u8] {
 }
 
 
-fn decode_windows1252(bytes: &[u8]) -> ~[char] {
+pure fn decode_windows1252(bytes: &[u8]) -> ~[char] {
     do bytes.map |byte| {
         if *byte <= 0x7F { *byte as char }
         else { indexes::windows1252[*byte - 0x80] }
@@ -101,7 +103,7 @@ fn decode_windows1252(bytes: &[u8]) -> ~[char] {
 }
 
 
-fn encode_windows1252(code_points: &[char]) -> ~[u8] {
+pure fn encode_windows1252(code_points: &[char]) -> ~[u8] {
     do code_points.map |cp| {
         if *cp <= '\x7F' {
             *cp as u8
