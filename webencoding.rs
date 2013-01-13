@@ -35,14 +35,21 @@ fn encode_windows1252(code_points: &[u32]) -> ~[u8] {
 }
 
 
-#[test]
-fn test_windows1252() {
-    fn test_windows1252(bytes: &[u8], code_points: &[u32]) {
-        let decoded: &[u32] = decode_windows1252(bytes);
-        let encoded: &[u8] = encode_windows1252(code_points);
+#[cfg(test)]
+mod tests {
+    fn test_codec(
+            decoder: fn (&[u8]) -> ~[u32],
+            encoder: fn (&[u32]) -> ~[u8],
+            bytes: &[u8], code_points: &[u32]) {
+        let decoded: &[u32] = decoder(bytes);
+        let encoded: &[u8] = encoder(code_points);
         assert decoded == code_points;
         assert encoded == bytes;
     }
 
-    test_windows1252(&[72, 128, 108, 108, 246], &[72, 8364, 108, 108, 246]);
+    #[test]
+    fn test_windows1252() {
+        test_codec(decode_windows1252, encode_windows1252,
+            &[72, 128, 108, 108, 246], &[72, 8364, 108, 108, 246]);
+    }
 }
