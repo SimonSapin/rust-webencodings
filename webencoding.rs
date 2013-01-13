@@ -108,6 +108,10 @@ pure fn encode_windows1252(code_points: &[char]) -> ~[u8] {
         if *cp <= '\x7F' {
             *cp as u8
         } else {
+            // TODO: make this faster.
+            // This is a O(n) linear search. (n = 128)
+            // Python uses a fixed (5bit, 7bit, 4bit) trie,
+            // and falls back on a dict (hash map) if an encoding does not fit.
             (indexes::windows1252.position(|v| {*v == *cp}).get() + 0x80) as u8
         }
     }
