@@ -6,30 +6,21 @@ const REPLACEMENT_CHARACTER: char = '\uFFFD';
 
 
 fn decode_windows1252(bytes: &[u8]) -> ~[char] {
-    let mut code_points = ~[];
-    for vec::each(bytes) |byte| {
-        code_points.push(
-            if *byte <= 0x7F { *byte as char }
-            else { indexes::windows1252[*byte - 0x80] }
-        )
-    }
-    code_points
+    bytes.map(|byte| {
+        if *byte <= 0x7F { *byte as char }
+        else { indexes::windows1252[*byte - 0x80] }
+    })
 }
 
 
 fn encode_windows1252(code_points: &[char]) -> ~[u8] {
-    let mut bytes = ~[];
-    for vec::each(code_points) |code_point| {
-        bytes.push(match *code_point {
-            code_point if code_point <= '\x7F' => code_point as u8,
-            code_point =>
-                match indexes::windows1252.position(|v| {*v == code_point}) {
-                    Some(index) => (index + 0x80) as u8,
-                    _ => fail
-                }
-        })
-    }
-    bytes
+    code_points.map(|cp| {
+        if *cp <= '\x7F' {
+            *cp as u8
+        } else {
+            (indexes::windows1252.position(|v| {*v == *cp}).get() + 0x80) as u8
+        }
+    })
 }
 
 
