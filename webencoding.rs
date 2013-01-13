@@ -141,32 +141,34 @@ mod tests {
         }
     }
 
-    fn test_codec(encoding: Encoding, string: &str, bytes: &[u8]) {
-        let encoded: &[u8] = (encoding.encoder)(str::chars(string));
-        let decoded: &str = str::from_chars((encoding.decoder)(bytes));
+    fn test_codec(encoding: Encoding, code_points: &[char], bytes: &[u8]) {
+        let encoded: &[u8] = (encoding.encoder)(code_points);
+        let decoded: &[char] = (encoding.decoder)(bytes);
         assert_equals("Encoding", &encoded, &bytes);
-        assert_equals("Decoding", &decoded, &string);
+        assert_equals("Decoding", &decoded, &code_points);
     }
 
     #[test]
     fn test_windows1252() {
-        test_codec(Windows1252, "H€llö", [72, 128, 108, 108, 246]);
+        test_codec(Windows1252, ['H', '€', 'l', 'l', 'ö'],
+                   [72, 128, 108, 108, 246]);
     }
 
     #[test]
     #[should_fail]
     fn test_invalid_windows1252() {
-        (Windows1252.encoder)(str::chars("今日は"));
+        (Windows1252.encoder)(['今', '日', 'は']);
     }
 
     #[test]
     fn test_utf8() {
-        test_codec(UTF8, "H€llö", [72, 226, 130, 172, 108, 108, 195, 182]);
-        test_codec(UTF8, "今日は",
+        test_codec(UTF8, ['H', '€', 'l', 'l', 'ö'],
+                   [72, 226, 130, 172, 108, 108, 195, 182]);
+        test_codec(UTF8, ['今', '日', 'は'],
                    [228, 187, 138, 230, 151, 165, 227, 129, 175]);
-        let decoded: &str = str::from_chars((UTF8.decoder)(
-            [72, 226, 130, 255, 108, 108, 195, 182]));
-        let string: &str = "H��llö";
-        assert_equals("Decoding errors", &decoded, &string)
+        let decoded: &[char] = (UTF8.decoder)(
+            [72, 226, 130, 255, 108, 108, 195, 182]);
+        assert_equals("Decoding errors", &decoded,
+                      & &['H', '�', '�', 'l', 'l', 'ö'])
     }
 }
