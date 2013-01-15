@@ -117,25 +117,33 @@ pure fn encode_windows1252(code_points: &[char]) -> ~[u8] {
     }
 }
 
-type Encoding = {
-    name: &str,
-    encoder: fn (&[char]) -> ~[u8],
-    decoder: fn (&[u8]) -> ~[char],
-};
+trait Encoding {
+    pure fn encode(&[char]) -> ~[u8];
 
-const UTF8: Encoding = {
-    name: "utf-8",
-    encoder: encode_utf8,
-    decoder: decode_utf8,
-};
+    //FIXME purity
+    fn decode(&[u8]) -> ~[char];
+}
 
+enum Windows1252 { Windows1252 }
+impl Windows1252 : Encoding {
+    pure fn encode(value: &[char]) -> ~[u8] {
+        encode_windows1252(value)
+    }
+    pure fn decode(value: &[u8]) -> ~[char] {
+        decode_windows1252(value)
+    }
+}
 
-const Windows1252: Encoding = {
-    name: "windows-1252",
-    encoder: encode_windows1252,
-    decoder: decode_windows1252,
-};
-
+enum UTF8 { UTF8 }
+impl UTF8 : Encoding {
+    pure fn encode(value: &[char]) -> ~[u8] {
+        encode_utf8(value)
+    }
+    //FIXME purity
+    fn decode(value: &[u8]) -> ~[char] {
+        decode_utf8(value)
+    }
+}
 
 #[cfg(test)]
 mod tests {
@@ -150,31 +158,31 @@ mod tests {
     }
 
     fn test_codec(encoding: Encoding, code_points: &[char], bytes: &[u8]) {
-        let encoded: &[u8] = (encoding.encoder)(code_points);
-        let decoded: &[char] = (encoding.decoder)(bytes);
+        let encoded: &[u8] = encoding.encode(code_points);
+        let decoded: &[char] = encoding.decode(bytes);
         assert_bytes_equals("Encoding", encoded, bytes);
         assert_chars_equals("Decoding", decoded, code_points);
     }
 
     #[test]
     fn test_windows1252() {
-        test_codec(Windows1252, ['H', '€', 'l', 'l', 'ö'],
+        test_codec(Windows1252 as Encoding, ['H', '€', 'l', 'l', 'ö'],
                    [72, 128, 108, 108, 246]);
     }
 
     #[test]
     #[should_fail]
     fn test_invalid_windows1252() {
-        (Windows1252.encoder)(['今', '日', 'は']);
+        Windows1252.encode(['今', '日', 'は']);
     }
 
     #[test]
     fn test_utf8() {
-        test_codec(UTF8, ['H', '€', 'l', 'l', 'ö'],
+        test_codec(UTF8 as Encoding, ['H', '€', 'l', 'l', 'ö'],
                    [72, 226, 130, 172, 108, 108, 195, 182]);
-        test_codec(UTF8, ['今', '日', 'は'],
+        test_codec(UTF8 as Encoding, ['今', '日', 'は'],
                    [228, 187, 138, 230, 151, 165, 227, 129, 175]);
-        let decoded: &[char] = (UTF8.decoder)(
+        let decoded: &[char] = UTF8.decode(
             [72, 226, 130, 255, 108, 108, 195, 182]);
         assert_chars_equals("Decoding errors", decoded,
                             ['H', '�', '�', 'l', 'l', 'ö'])
